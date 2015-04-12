@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubtitlePlexify", "SubtitlePlexify\SubtitlePlexify.csproj", "{A64C488B-961D-49E2-BCB9-87E1CD728BD0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SubtitlePlexify.Test", "SubtitlePlexify.Test\SubtitlePlexify.Test.csproj", "{4F032712-5F36-4B2B-957E-7E71C3AC2A0F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A64C488B-961D-49E2-BCB9-87E1CD728BD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A64C488B-961D-49E2-BCB9-87E1CD728BD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A64C488B-961D-49E2-BCB9-87E1CD728BD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A64C488B-961D-49E2-BCB9-87E1CD728BD0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F032712-5F36-4B2B-957E-7E71C3AC2A0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F032712-5F36-4B2B-957E-7E71C3AC2A0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F032712-5F36-4B2B-957E-7E71C3AC2A0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F032712-5F36-4B2B-957E-7E71C3AC2A0F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

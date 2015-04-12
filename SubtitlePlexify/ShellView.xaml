@@ -1,0 +1,52 @@
+<Window x:Class="SubtitlePlexify.ShellView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:sp="clr-namespace:SubtitlePlexify"
+        xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
+        Title="SubtitlePlexify"
+        >
+    <Window.Resources>
+        <ResourceDictionary>
+            <sp:FilePathToFileNameConverter x:Key="FilePathToFileNameConverter" />
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid Background="White"  dd:DragDrop.IsDropTarget="True"
+                  dd:DragDrop.DropHandler="{Binding}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25" />
+            <RowDefinition />
+            <RowDefinition Height="44" />
+        </Grid.RowDefinitions>
+
+        <Label Grid.Row="0">Trascina una cartella o una serie di file per iniziare</Label>
+
+        <DataGrid x:Name="FileMatchList"
+                  Grid.Row="1"
+                 
+                  Background="AliceBlue"
+                  AutoGenerateColumns="False"
+                  >
+            <DataGrid.Columns>
+                <DataGridTextColumn x:Name="VideoFile_Path" Header="Video" Binding="{Binding VideoFile_Path}"/>
+                <DataGridTextColumn x:Name="SubsFile_Path" Header="Sub"  Binding="{Binding SubsFile_Path}" />
+                <DataGridTextColumn x:Name="Arrow" Header="=>" />
+                <DataGridTextColumn x:Name="SubsFileRename_Path" Header="Sub Rinominato"  Binding="{Binding SubsFileRename_Path, Converter={StaticResource FilePathToFileNameConverter}}"/>
+            </DataGrid.Columns>
+  
+
+        </DataGrid>
+
+        <StackPanel Grid.Row="2" Orientation="Vertical" >
+           <!-- <Button x:Name="Elabora" Content="Elabora"/>-->
+            <Button x:Name="Rinomina" Content="Rinomina"/>
+            <Button x:Name="Svuota" Content="Svuota"/>
+        </StackPanel>
+
+        <xctk:BusyIndicator x:Name="Busy" IsBusy="{Binding Path=ShellIsBusy, Mode=OneWay,
+                                                UpdateSourceTrigger=PropertyChanged}" Grid.Row="0" Grid.Column="0" Grid.RowSpan="10" >
+        </xctk:BusyIndicator>
+    </Grid>
+
+</Window>
