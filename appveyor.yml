@@ -1,0 +1,6 @@
+version: 1.0.0.B{build}
+image: Visual Studio 2017
+before_build:
+- cmd: nuget restore
+build:
+  verbosity: minimal
