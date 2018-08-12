@@ -15,34 +15,107 @@ namespace SubtitlePlexify.BusinessLogic
 
         protected static string[] PLEX_SUPPORTED_SUB_EXTENSIONS = { ".srt", ".smi", ".ass", ".ssa" };
 
-        protected static string[] PLEX_SUPPORTED_VIDEO_EXTENSIONS = { ".avi", ".mp4" , ".mkv"}; // Parzialmente popolato
+        protected static string[] PLEX_SUPPORTED_VIDEO_EXTENSIONS = { ".avi", ".mp4", ".mkv" }; // Parzialmente popolato
 
         public void IdentifyFile(ICollection<FileAndSubDTO> list, string newFilePath)
         {
             var ext = Path.GetExtension(newFilePath);
             var filename = Path.GetFileName(newFilePath);
 
-    
+
+            if (!ext.EndsWithAny(PLEX_SUPPORTED_VIDEO_EXTENSIONS) && !ext.EndsWithAny(PLEX_SUPPORTED_SUB_EXTENSIONS))
+                return; // unidentified file type (neither VIDEO or SUBS)
+
 
             // struttura: parti separate da punti (.)
-            char separator = '.';
+            string showName, episodeDescription;
+            bool result = TryIdentifyWithDot(filename, out showName, out episodeDescription);
+
+            if (!result)
+                result = TryIdentifyWithMinus(filename, out showName, out episodeDescription);
+
+            if (!result)
+                result = TryIdentifyWithUnderscore(filename, out showName, out episodeDescription);
+
+            if (result)
+            {
+                if (ext.EndsWithAny(PLEX_SUPPORTED_VIDEO_EXTENSIONS))
+                {
+                    // var file = list.FirstOrDefault(t => t.SubsFile_Path != null && t.SubsFile_Path.ToLowerInvariant().Contains(substringfile.ToLowerInvariant()));
+                    var file = list.FirstOrDefault(t =>
+                        t.SubsFile_Path != null && string.Compare(t.ShowName, showName, true) == 0 &&
+                        string.Compare(t.EpisodeDescription, episodeDescription, true) == 0);
+
+                    if (file != null)
+                        file.VideoFile_Path = newFilePath;
+                    else
+                        list.Add(new FileAndSubDTO
+                        {
+                            VideoFile_Path = newFilePath,
+                            ShowName = showName,
+                            EpisodeDescription = episodeDescription
+                        });
+                }
+                else if (ext.EndsWithAny(PLEX_SUPPORTED_SUB_EXTENSIONS))
+                {
+                    //  var file = list.FirstOrDefault(t => t.VideoFile_Path != null && t.VideoFile_Path.ToLowerInvariant().Contains(substringfile.ToLowerInvariant()));
+                    var file = list.FirstOrDefault(t =>
+                        t.VideoFile_Path != null && string.Compare(t.ShowName, showName, true) == 0 &&
+                        string.Compare(t.EpisodeDescription, episodeDescription, true) == 0);
+
+                    if (file != null)
+                        file.SubsFile_Path = newFilePath;
+                    else
+                        list.Add(new FileAndSubDTO
+                        {
+                            SubsFile_Path = newFilePath,
+                            ShowName = showName,
+                            EpisodeDescription = episodeDescription
+                        });
+                }
+            }
+            else
+            {
+                if (ext.EndsWithAny(PLEX_SUPPORTED_VIDEO_EXTENSIONS))
+                {
+
+                    list.Add(new FileAndSubDTO
+                    {
+                        VideoFile_Path = newFilePath,
+                        ShowName = showName,
+                        EpisodeDescription = episodeDescription
+                    });
+                }
+                else if (ext.EndsWithAny(PLEX_SUPPORTED_SUB_EXTENSIONS))
+                {
+
+                    list.Add(new FileAndSubDTO
+                    {
+                        SubsFile_Path = newFilePath,
+                        ShowName = showName,
+                        EpisodeDescription = episodeDescription
+                    });
+                }
+            }
+        }
+
+        protected static bool TryIdentifyWithDot(string filename, out string showName, out string episodeDescription)
+        {
+            bool result = false;
+            showName = filename;
+            episodeDescription = filename;
+            const char separator = '.';
             int idxFirstSeparator = 0;
             do
             {
                 idxFirstSeparator = filename.IndexOf(separator, idxFirstSeparator + 1);
-            } while (!StartsWithValidSeasonEpisode(filename, idxFirstSeparator) && idxFirstSeparator != -1); // Migliorare riconoscimento episodio
+            } while (!StartsWithValidSeasonEpisode(filename, idxFirstSeparator) && idxFirstSeparator != -1
+            );
 
 
-            // struttura: parti separate da punti (-)
             if (idxFirstSeparator == -1)
-            {
-                separator = '-';
-                idxFirstSeparator = 0;
-                do
-                {
-                    idxFirstSeparator = filename.IndexOf(separator, idxFirstSeparator + 1);
-                } while (!StartsWithValidSeasonEpisode(filename, idxFirstSeparator) && idxFirstSeparator != -1); // Migliorare riconoscimento episodio
-            }
+                return result;
+
 
             int idxSecondSeparator = filename.IndexOf(separator, idxFirstSeparator + 1);
 
@@ -51,32 +124,96 @@ namespace SubtitlePlexify.BusinessLogic
                 idxSecondSeparator = filename.Length - 1;
 
 
-            var substringfile = filename.Substring(0, idxSecondSeparator - idxFirstSeparator -1);
+            var substringfile = filename.Substring(0, idxSecondSeparator - idxFirstSeparator - 1);
 
 
-            string showName = idxFirstSeparator != -1 ? filename.Substring(0, idxFirstSeparator).Replace(separator, ' ').Trim() :  substringfile;
-            string episodeDescription = idxFirstSeparator != -1 && idxSecondSeparator != -1 ? ConvertoToSEFormat(filename.Substring(idxFirstSeparator + 1, idxSecondSeparator - idxFirstSeparator - 1).ToLowerInvariant()) : substringfile;
+            showName = idxFirstSeparator != -1
+                ? ConvertShowName_To_Standard_Format(filename.Substring(0, idxFirstSeparator).Replace(separator, ' ').Trim())
+                : substringfile;
+            episodeDescription = idxFirstSeparator != -1 && idxSecondSeparator != -1
+                ? ConvertEpisodeDescription_To_sNNeNN_Format(filename.Substring(idxFirstSeparator + 1, idxSecondSeparator - idxFirstSeparator - 1)
+                    .ToLowerInvariant())
+                : substringfile;
+            result = true;
+            return result;
+        }
 
-            if (ext.EndsWithAny(PLEX_SUPPORTED_VIDEO_EXTENSIONS))
+        protected static bool TryIdentifyWithMinus(string filename, out string showName, out string episodeDescription)
+        {
+            bool result = false;
+            showName = filename;
+            episodeDescription = filename;
+            const char separator = '-';
+            int idxFirstSeparator = 0;
+            do
             {
-               // var file = list.FirstOrDefault(t => t.SubsFile_Path != null && t.SubsFile_Path.ToLowerInvariant().Contains(substringfile.ToLowerInvariant()));
-                var file = list.FirstOrDefault(t => t.SubsFile_Path != null && string.Compare(t.ShowName, showName, true) == 0 && string.Compare(t.EpisodeDescription, episodeDescription, true) == 0);
+                idxFirstSeparator = filename.IndexOf(separator, idxFirstSeparator + 1);
+            } while (!StartsWithValidSeasonEpisode(filename, idxFirstSeparator) && idxFirstSeparator != -1
+            );
 
-                if (file != null)
-                    file.VideoFile_Path = newFilePath;
-                else
-                    list.Add(new FileAndSubDTO { VideoFile_Path = newFilePath, ShowName = showName, EpisodeDescription = episodeDescription });
-            }
-            else if (ext.EndsWithAny(PLEX_SUPPORTED_SUB_EXTENSIONS))
+
+            if (idxFirstSeparator == -1)
+                return result;
+
+
+            int idxSecondSeparator = filename.IndexOf(separator, idxFirstSeparator + 1);
+
+
+            if (idxSecondSeparator == -1)
+                idxSecondSeparator = filename.Length - 1;
+
+
+            var substringfile = filename.Substring(0, idxSecondSeparator - idxFirstSeparator - 1);
+
+
+            showName = idxFirstSeparator != -1
+                ? ConvertShowName_To_Standard_Format(filename.Substring(0, idxFirstSeparator).Replace(separator, ' ').Trim())
+                : substringfile;
+            episodeDescription = idxFirstSeparator != -1 && idxSecondSeparator != -1
+                ? ConvertEpisodeDescription_To_sNNeNN_Format(filename.Substring(idxFirstSeparator + 1, idxSecondSeparator - idxFirstSeparator - 1)
+                    .ToLowerInvariant())
+                : substringfile;
+            result = true;
+            return result;
+        }
+
+        protected static bool TryIdentifyWithUnderscore(string filename, out string showName, out string episodeDescription)
+        {
+            bool result = false;
+            showName = filename;
+            episodeDescription = filename;
+            const char separator = '_';
+            int idxFirstSeparator = 0;
+            do
             {
-               //  var file = list.FirstOrDefault(t => t.VideoFile_Path != null && t.VideoFile_Path.ToLowerInvariant().Contains(substringfile.ToLowerInvariant()));
-                var file = list.FirstOrDefault(t => t.VideoFile_Path != null && string.Compare(t.ShowName, showName, true) == 0 && string.Compare(t.EpisodeDescription, episodeDescription, true) == 0);
+                idxFirstSeparator = filename.IndexOf(separator, idxFirstSeparator + 1);
+            } while (!StartsWithValidSeasonEpisode(filename, idxFirstSeparator) && idxFirstSeparator != -1
+            );
 
-                if (file != null)
-                    file.SubsFile_Path = newFilePath;
-                else
-                    list.Add(new FileAndSubDTO { SubsFile_Path = newFilePath, ShowName = showName, EpisodeDescription = episodeDescription });
-            }
+
+            if (idxFirstSeparator == -1)
+                return result;
+
+
+            int idxSecondSeparator = filename.IndexOf(separator, idxFirstSeparator + 1);
+
+
+            if (idxSecondSeparator == -1)
+                idxSecondSeparator = filename.Length - 1;
+
+
+            var substringfile = filename.Substring(0, idxSecondSeparator - idxFirstSeparator - 1);
+
+
+            showName = idxFirstSeparator != -1
+                ? ConvertShowName_To_Standard_Format(filename.Substring(0, idxFirstSeparator).Replace(separator, ' ').Trim())
+                : substringfile;
+            episodeDescription = idxFirstSeparator != -1 && idxSecondSeparator != -1
+                ? ConvertEpisodeDescription_To_sNNeNN_Format(filename.Substring(idxFirstSeparator + 1, idxSecondSeparator - idxFirstSeparator - 1)
+                    .ToLowerInvariant())
+                : substringfile;
+            result = true;
+            return result;
         }
 
 
@@ -96,9 +233,9 @@ namespace SubtitlePlexify.BusinessLogic
         }
 
 
-        #region Metodi privanti
+        #region Metodi privati
 
-        private static bool StartsWithValidSeasonEpisode(string filename, int idxSeparator)
+        protected static bool StartsWithValidSeasonEpisode(string filename, int idxSeparator)
         {
             var substring = filename.Substring(idxSeparator + 1).Trim().ToLowerInvariant();
 
@@ -135,7 +272,7 @@ namespace SubtitlePlexify.BusinessLogic
         /// </summary>
         /// <param name="episodeDescription"></param>
         /// <returns></returns>
-        protected static string ConvertoToSEFormat(string episodeDescription)
+        protected static string ConvertEpisodeDescription_To_sNNeNN_Format(string episodeDescription)
         {
             string substring = episodeDescription.Trim().ToLowerInvariant();
 
@@ -156,7 +293,7 @@ namespace SubtitlePlexify.BusinessLogic
                 && (char.IsDigit(substring[4]))
                 && (char.IsDigit(substring[5])))
             {
-                return string.Format("s{0}{1}e{2}{3}", substring[1] ,substring[2], substring[4], substring[5]);
+                return string.Format("s{0}{1}e{2}{3}", substring[1], substring[2], substring[4], substring[5]);
             }
 
 
@@ -173,6 +310,43 @@ namespace SubtitlePlexify.BusinessLogic
 
             // Formato non riconosciuto
             return episodeDescription;
+        }
+
+        protected static string ConvertShowName_To_Standard_Format(string showName)
+        {
+            if (string.IsNullOrWhiteSpace(showName))
+                return null;
+
+
+            var returnShowName = showName.Replace(".", " ");
+
+            //There are no spaces in name but there are multiple single CAPS letters... try to separate by capital
+            // TheBestSeries => The Best Series
+            // but be careful!
+            // NCISTheBestSeries => NCIS The Best Series
+            if (!returnShowName.Contains(' ') && char.IsUpper(returnShowName[0]) && returnShowName.Count(c => char.IsUpper(c)) >= 2)
+            {
+                StringBuilder dest = new StringBuilder();
+                for (int i = 0; i < returnShowName.Length; i++)
+                {
+                    char c = returnShowName[i];
+                    if (char.IsUpper(c))
+                    {
+                        if (i == 0) // initial char
+                            dest.Append(c);
+                        else if (char.IsUpper(returnShowName[i - 1]) && (i < returnShowName.Length - 1) && char.IsUpper(returnShowName[i + 1]))
+                            dest.Append(c);
+                        else
+                            dest.Append(' ').Append(c);
+                    }
+                    else
+                        dest.Append(c);
+                }
+                returnShowName = dest.ToString();
+
+            }
+            return returnShowName;
+
         }
         #endregion
     }
