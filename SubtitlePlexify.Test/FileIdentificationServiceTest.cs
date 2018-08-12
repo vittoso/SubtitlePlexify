@@ -171,5 +171,21 @@ namespace SubtitlePlexify.Test
             Assert.AreEqual("s16e01", list[0].EpisodeDescription);
         }
 
+        [TestMethod]
+        public void TwoFiles_NoBracketNamesMkvSrt_MinusSeparator_OK()
+        {
+            List<FileAndSubDTO> list = new List<FileAndSubDTO>();
+
+            string videoFile = "The Series.S15E23.HDTV.x264-LOL[eztv].mkv";
+            string srtFile = "The Series - 15x23 - Fallout.DIMENSION - Sub.Ita.srt";
+            service.IdentifyFile(list, videoFile);
+            service.IdentifyFile(list, srtFile);
+
+            Assert.IsTrue(list.Count == 1);
+            Assert.AreEqual(videoFile, list[0].VideoFile_Path);
+            Assert.AreEqual(srtFile, list[0].SubsFile_Path);
+            Assert.AreEqual("The Series", list[0].ShowName);
+            Assert.AreEqual("s15e23", list[0].EpisodeDescription);
+        }
     }
 }

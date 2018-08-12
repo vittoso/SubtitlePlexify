@@ -119,6 +119,14 @@ namespace SubtitlePlexify.BusinessLogic
                 && (char.IsDigit(substring[2])))
                 return true;
 
+
+            // struttura NNxNN
+
+            if ((substring.Length > 2 && substring[2] == 'x')
+                && (char.IsDigit(substring[0]))
+                && (char.IsDigit(substring[1])))
+                return true;
+
             return false;
         }
 
@@ -144,9 +152,23 @@ namespace SubtitlePlexify.BusinessLogic
                 && (substring.Length > 6 && substring[6] == ']')
                 && (substring.Length > 3 && substring[3] == 'x')
                 && (char.IsDigit(substring[1]))
-                && (char.IsDigit(substring[2])))
+                && (char.IsDigit(substring[2]))
+                && (char.IsDigit(substring[4]))
+                && (char.IsDigit(substring[5])))
             {
                 return string.Format("s{0}{1}e{2}{3}", substring[1] ,substring[2], substring[4], substring[5]);
+            }
+
+
+            // struttura NNxNN
+
+            if ((substring.Length > 2 && substring[2] == 'x')
+                && (char.IsDigit(substring[0]))
+                && (char.IsDigit(substring[1]))
+                && (char.IsDigit(substring[3]))
+                && (char.IsDigit(substring[4])))
+            {
+                return string.Format("s{0}{1}e{2}{3}", substring[0], substring[1], substring[3], substring[4]);
             }
 
             // Formato non riconosciuto
