@@ -27,7 +27,6 @@ namespace SubtitlePlexify.BusinessLogic
                 return; // unidentified file type (neither VIDEO or SUBS)
 
 
-            // struttura: parti separate da punti (.)
             string showName, episodeDescription;
             bool result = TryIdentifyWithDot(filename, out showName, out episodeDescription);
 
@@ -41,7 +40,6 @@ namespace SubtitlePlexify.BusinessLogic
             {
                 if (ext.EndsWithAny(PLEX_SUPPORTED_VIDEO_EXTENSIONS))
                 {
-                    // var file = list.FirstOrDefault(t => t.SubsFile_Path != null && t.SubsFile_Path.ToLowerInvariant().Contains(substringfile.ToLowerInvariant()));
                     var file = list.FirstOrDefault(t =>
                         t.SubsFile_Path != null && string.Compare(t.ShowName, showName, true) == 0 &&
                         string.Compare(t.EpisodeDescription, episodeDescription, true) == 0);
@@ -58,7 +56,6 @@ namespace SubtitlePlexify.BusinessLogic
                 }
                 else if (ext.EndsWithAny(PLEX_SUPPORTED_SUB_EXTENSIONS))
                 {
-                    //  var file = list.FirstOrDefault(t => t.VideoFile_Path != null && t.VideoFile_Path.ToLowerInvariant().Contains(substringfile.ToLowerInvariant()));
                     var file = list.FirstOrDefault(t =>
                         t.VideoFile_Path != null && string.Compare(t.ShowName, showName, true) == 0 &&
                         string.Compare(t.EpisodeDescription, episodeDescription, true) == 0);
@@ -78,7 +75,6 @@ namespace SubtitlePlexify.BusinessLogic
             {
                 if (ext.EndsWithAny(PLEX_SUPPORTED_VIDEO_EXTENSIONS))
                 {
-
                     list.Add(new FileAndSubDTO
                     {
                         VideoFile_Path = newFilePath,
@@ -88,7 +84,6 @@ namespace SubtitlePlexify.BusinessLogic
                 }
                 else if (ext.EndsWithAny(PLEX_SUPPORTED_SUB_EXTENSIONS))
                 {
-
                     list.Add(new FileAndSubDTO
                     {
                         SubsFile_Path = newFilePath,
